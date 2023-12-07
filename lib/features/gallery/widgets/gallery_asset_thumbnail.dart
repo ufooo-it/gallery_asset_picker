@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gallery_asset_picker/entities/gallery_asset.dart';
 import 'package:gallery_asset_picker/utils/utils.dart';
 import 'package:photo_manager/photo_manager.dart';
@@ -56,13 +57,6 @@ class AssetThumbnail extends StatelessWidget {
   }
 }
 
-typedef _DecoderCallback = Future<ui.Codec> Function(
-  Uint8List buffer, {
-  int? cacheWidth,
-  int? cacheHeight,
-  bool allowUpscaling,
-});
-
 /// ImageProvider implementation
 @immutable
 class _MediaThumbnailProvider extends ImageProvider<_MediaThumbnailProvider> {
@@ -77,22 +71,24 @@ class _MediaThumbnailProvider extends ImageProvider<_MediaThumbnailProvider> {
   final ValueSetter<Uint8List?>? onBytesLoaded;
 
   @override
-  ImageStreamCompleter load(_MediaThumbnailProvider key, _DecoderCallback decode) => MultiFrameImageStreamCompleter(
-        codec: _loadAsync(key, decode),
-        scale: 1,
-        informationCollector: () sync* {
-          yield ErrorDescription('Id: ${asset.id}');
-        },
-      );
+  ImageStreamCompleter loadImage(_MediaThumbnailProvider key, ImageDecoderCallback decode) {
+    return MultiFrameImageStreamCompleter(
+      codec: _loadAsync(key, decode),
+      scale: 1,
+      informationCollector: () sync* {
+        yield ErrorDescription('Id: ${asset.id}');
+      },
+    );
+  }
 
   Future<ui.Codec> _loadAsync(
     _MediaThumbnailProvider key,
-    _DecoderCallback decode,
+    ImageDecoderCallback decode,
   ) async {
     assert(key == this, 'Checks _MediaThumbnailProvider');
     final bytes = await asset.thumbnailData;
     onBytesLoaded?.call(bytes);
-    return decode(bytes!);
+    return decode(await ImmutableBuffer.fromUint8List(bytes!));
   }
 
   @override

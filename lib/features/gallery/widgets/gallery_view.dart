@@ -65,8 +65,7 @@ class _GalleryViewState extends State<GalleryView> with SingleTickerProviderStat
       _toggleAlbumList();
       return false;
     }
-    if (GAPManager.controller.value.selectedAssets.isNotEmpty &&
-        GAPManager.config.closingDialogBuilder != null) {
+    if (GAPManager.controller.value.selectedAssets.isNotEmpty && GAPManager.config.closingDialogBuilder != null) {
       showDialog(
         context: context,
         builder: (context) => GAPManager.config.closingDialogBuilder!.call(),
@@ -99,8 +98,13 @@ class _GalleryViewState extends State<GalleryView> with SingleTickerProviderStat
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: GAPManager.config.overlayStyle,
       child: GAPManager.isFullScreenMode
-          ? WillPopScope(
-              onWillPop: _onWillClose,
+          ? PopScope(
+              onPopInvoked: (didPop) {
+                if (didPop) {
+                  return;
+                }
+                _onWillClose();
+              },
               child: Scaffold(
                 backgroundColor: GAPManager.colorScheme.background,
                 body: Padding(
@@ -149,9 +153,8 @@ class _GalleryViewState extends State<GalleryView> with SingleTickerProviderStat
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        final maxHeight = GAPManager.isFullScreenMode
-            ? MediaQuery.of(context).size.height
-            : GAPManager.slideSheetConfig.maxHeight!;
+        final maxHeight =
+            GAPManager.isFullScreenMode ? MediaQuery.of(context).size.height : GAPManager.slideSheetConfig.maxHeight!;
         final headerHeight = GAPManager.isFullScreenMode
             ? GAPManager.slideSheetConfig.toolbarHeight
             : GAPManager.slideSheetConfig.headerHeight;
